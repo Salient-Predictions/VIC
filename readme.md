@@ -1,3 +1,57 @@
+# Salient Modifications
+The Dockerfile has been updated with multiple targets:
+
+* base: A base layer for other targets to build on.
+* test: Adds the VIC sample data and packages required to run tests.
+* vic: The default target, just includes VIC.
+
+### Test Image
+To build the test image, from the VIC top level directory, run:
+
+```bash
+docker build -f ci/Dockerfile --target test -t salient/vic_test:canary .
+```
+
+To run the tests:
+```bash
+docker run --rm salient/vic_test:canary
+```
+
+### VIC Image
+To build the default VIC container image, from the VIC top level directory, run:
+
+```bash
+docker build -f ci/Dockerfile -t salient/vic:canary .
+```
+
+To run a sample:
+```bash
+docker run --rm -it salient/vic:canary bash
+
+# Get the sample data
+apt install -y git
+git clone https://github.com/UW-Hydro/VIC_sample_data.git /VIC_sample_data
+
+# Configure global parameter file
+cat /VIC_sample_data/image/Stehekin/parameters/Stehekin_image_test.global.txt | \
+    sed 's|${VIC_SAMPLE_DATA}|/VIC_sample_data|' | \
+    sed 's|${VIC_SAMPLE_RESULTS}|/VIC_sample_data|' > \
+    /VIC_sample_data/image/Stehekin/parameters/Stehekin_image_test.global2.txt
+
+# Make output directory
+mkdir /VIC_sample_data/sample_image/
+
+# Execute the VIC image driver
+/VIC/vic/drivers/image/vic_image.exe -g /VIC_sample_data/image/Stehekin/parameters/Stehekin_image_test.global2.txt
+
+# Alternatively, execute the VIC image driver in parallel
+mpiexec \
+    --allow-run-as-root \
+    -np 3 \
+    /VIC/vic/drivers/image/vic_image.exe \
+    -g /VIC_sample_data/image/Stehekin/parameters/Stehekin_image_test.global2.txt
+```
+
 # Variable Infiltration Capacity (VIC) Model
 
 | VIC Links & Badges              |                                                                             |
